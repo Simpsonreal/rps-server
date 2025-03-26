@@ -1,0 +1,46 @@
+{
+  "games": [
+    {
+      "playerChoice": "rock",
+      "computerChoice": "scissors",
+      "result": "Ты выиграл!"
+    },
+    {
+      "playerChoice": "rock",
+      "computerChoice": "scissors",
+      "result": "Ты выиграл!"
+    },
+    {
+      "playerChoice": "rock",
+      "computerChoice": "scissors",
+      "result": "Ты выиграл!"
+    },
+    {
+      "playerChoice": "rock",
+      "computerChoice": "paper",
+      "result": "Компьютер выиграл!"
+    },
+    {
+      "playerChoice": "rock",
+      "computerChoice": "rock",
+      "result": "Ничья!"
+    },
+    {
+      "playerChoice": "rock",
+      "computerChoice": "rock",
+      "result": "Ничья!"
+    },
+    {
+      "playerChoice": "rock",
+      "computerChoice": "rock",
+      "result": "Ничья!"
+    },
+    {
+      "playerChoice": "rock",
+      "computerChoice": "scissors",
+      "result": "Ты выиграл!"
+    }
+  ],
+  "playerScore": 4,
+  "computerScore": 1
+}
