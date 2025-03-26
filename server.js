@@ -31,7 +31,9 @@ app.use((req, res, next) => {
 
 async function loadData() {
     try {
+        console.log('Попытка загрузки data.json...');
         const data = await fs.readFile('data.json', 'utf8');
+        console.log('data.json успешно прочитан:', data);
         return JSON.parse(data);
     } catch (error) {
         console.error('Ошибка загрузки данных:', error);
@@ -47,6 +49,11 @@ async function saveData(data) {
         console.error('Ошибка сохранения данных:', error);
     }
 }
+
+// Базовый маршрут для проверки работы сервера
+app.get('/', (req, res) => {
+    res.send('Сервер работает!');
+});
 
 app.get('/stats', async (req, res) => {
     const data = await loadData();
