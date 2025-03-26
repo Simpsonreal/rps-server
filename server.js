@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs').promises;
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000; // Используем PORT от Heroku или 3000 локально
 
 // Разрешаем CORS
 app.use((req, res, next) => {
@@ -18,6 +18,16 @@ app.use((req, res, next) => {
     console.log('Тело запроса:', req.body);
     next();
 });
+
+// Проверяем, существует ли data.json, и создаем его, если нет
+(async () => {
+    try {
+        await fs.access('data.json');
+    } catch (error) {
+        console.log('data.json не найден, создаем новый');
+        await fs.writeFile('data.json', JSON.stringify({ games: [], playerScore: 0, computerScore: 0 }, null, 2));
+    }
+})();
 
 async function loadData() {
     try {
