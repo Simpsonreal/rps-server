@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs').promises;
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Разрешаем CORS
 app.use((req, res, next) => {
@@ -69,5 +69,5 @@ app.post('/game', async (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`Сервер запущен на http://localhost:${port}`);
+    console.log(`Сервер запущен на порту ${port}`);
 });
