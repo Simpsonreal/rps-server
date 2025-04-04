@@ -1,12 +1,13 @@
 {
   "name": "rps-server",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "pg": "^8.7.3",
+    "@foile/crypto-pay-api": "^2.0.0"
   }
 }
