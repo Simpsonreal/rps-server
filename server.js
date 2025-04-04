@@ -29,11 +29,10 @@ app.use((req, res, next) => {
 
 // Настройка подключения к PostgreSQL
 const pool = new Pool({
-    user: 'rps_user',
-    host: 'localhost',
-    database: 'rps_db',
-    password: 'Myra04102013', // Укажи свой пароль
-    port: 5432
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false // Для Render нужно отключить проверку SSL
+    }
 });
 
 // Проверка подключения к базе данных
