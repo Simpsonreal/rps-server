@@ -1,6 +1,6 @@
 const express = require('express');
 const { Pool } = require('pg');
-const { CryptoPay, Assets } = require('@foile/crypto-pay-api');
+const CryptoBotAPI = require('crypto-bot-api');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -29,10 +29,11 @@ app.use((req, res, next) => {
 
 // Настройка подключения к PostgreSQL
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false // Для Render нужно отключить проверку SSL
-    }
+    user: 'rps_user',
+    host: 'localhost',
+    database: 'rps_db',
+    password: 'Myra04102013', // Укажи свой пароль
+    port: 5432
 });
 
 // Проверка подключения к базе данных
@@ -46,10 +47,7 @@ pool.connect((err, client, release) => {
 });
 
 // Инициализация CryptoPay
-const cryptoPay = new CryptoPay('34606:AAonEuhKZUn26EwMPiaAII7qdkDSy9vaoSB', {
-    hostname: 'testnet-pay.crypt.bot', // Для тестовой сети
-    protocol: 'https'
-});
+const cryptoPay = new CryptoBotAPI('34606:AAonEuhKZUn26EwMPiaAII7qdkDSy9vaoSB');
 
 // Базовый маршрут для проверки работы сервера
 app.get('/', (req, res) => {
@@ -133,15 +131,24 @@ app.post('/game', async (req, res) => {
 // Эндпоинт для создания счёта через @CryptoBot
 app.post('/create-invoice', async (req, res) => {
     try {
-        const { amount, asset, description } = req.body;
-        const invoice = await cryptoPay.createInvoice(asset, amount, {
-            description,
+        const { amount, asset, description, userId, tonAddress } = req.body;
+        const invoice = await cryptoPay.createInvoice({
+            asset: asset,
+            amount: amount,
+            description: description,
             allow_anonymous: false
         });
+
+        // Сохраняем userId и tonAddress в базе данных
+        await pool.query(
+            'INSERT INTO users (user_id, ton_address) VALUES ($1, $2) ON CONFLICT (user_id) DO UPDATE SET ton_address = $2',
+            [userId, tonAddress]
+        );
+
         res.json({
             success: true,
             invoiceId: invoice.invoice_id,
-            payUrl: invoice.pay_url
+            payUrl: invoice.bot_invoice_url
         });
     } catch (e) {
         console.error('Ошибка при создании счёта:', e);
@@ -153,8 +160,7 @@ app.post('/create-invoice', async (req, res) => {
 app.post('/check-invoice', async (req, res) => {
     try {
         const { invoiceId } = req.body;
-        const invoices = await cryptoPay.getInvoices({ invoice_ids: invoiceId });
-        const invoice = invoices.items.find(inv => inv.invoice_id === invoiceId);
+        const invoice = await cryptoPay.getInvoice(invoiceId);
         res.json({ status: invoice.status });
     } catch (e) {
         console.error('Ошибка при проверке оплаты:', e);
@@ -165,10 +171,12 @@ app.post('/check-invoice', async (req, res) => {
 // Эндпоинт для обработки результата игры и отправки награды
 app.post('/game-result', async (req, res) => {
     try {
-        const { playerAddress, result, gameId } = req.body;
+        const { playerAddress, userId, result, gameId } = req.body;
         if (result === 'win') {
-            const userId = await getUserIdFromAddress(playerAddress); // Нужно реализовать
-            const transfer = await cryptoPay.transfer(userId, Assets.TON, 0.015, {
+            const transfer = await cryptoPay.transfer({
+                user_id: userId,
+                asset: 'TON',
+                amount: '0.015',
                 spend_id: `game_${gameId}`,
                 comment: 'Награда за победу в игре'
             });
@@ -182,12 +190,18 @@ app.post('/game-result', async (req, res) => {
     }
 });
 
-// Функция для получения userId по адресу кошелька (заглушка)
+// Функция для получения userId по адресу кошелька
 async function getUserIdFromAddress(address) {
-    // В реальном приложении нужно сопоставить адрес кошелька с Telegram userId
-    // Для этого можно добавить таблицу в PostgreSQL для хранения пар "userId - TON address"
-    // Пока используем заглушку
-    return 123456789; // Замени на реальный userId
+    try {
+        const result = await pool.query('SELECT user_id FROM users WHERE ton_address = $1', [address]);
+        if (result.rows.length > 0) {
+            return result.rows[0].user_id;
+        }
+        throw new Error('Пользователь не найден');
+    } catch (e) {
+        console.error('Ошибка при получении userId:', e);
+        throw e;
+    }
 }
 
 app.listen(port, () => {
